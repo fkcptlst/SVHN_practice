@@ -24,7 +24,7 @@ class Dataset(data.Dataset):
         example.ParseFromString(value)
 
         image = np.frombuffer(example.image, dtype=np.uint8)
-        image = image.reshape([54, 54, 3])
+        image = image.reshape([54, 54, 3]) # TODO
         image = Image.fromarray(image)
         image = self._transform(image)
 

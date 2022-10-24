@@ -1,5 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
+from .SPP import SPPLayer
+from .STN import STNLayer
 
 
 class Block(nn.Module):
@@ -44,8 +46,11 @@ class Model(nn.Module):
            (6, 160, 3, 2)]
 
     # t为扩张系数，c为输出通道数，n为该层重复的次数，s为步长
-    def __init__(self):
+    def __init__(self, spp_level=5, spp_type='max_pool', stn_spp_num_levels=3, stn_adaptive_pooling_shape=(54,54), stn_spp_pool_type='max_pool'):
         super().__init__()
+
+        self.stn_layer = STNLayer(spp_num_levels=stn_spp_num_levels, adaptive_pooling_shape=stn_adaptive_pooling_shape, spp_pool_type=stn_spp_pool_type)
+
         self.hidden1 = nn.Sequential(nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1, bias=False),
                                      nn.BatchNorm2d(32),
                                      nn.ReLU())
@@ -53,8 +58,14 @@ class Model(nn.Module):
         self.hidden2 = nn.Sequential(nn.Conv2d(160, 320, kernel_size=1, stride=1, padding=0, bias=False),
                                      nn.BatchNorm2d(320),
                                      nn.ReLU())
-        self._digit11 = nn.Sequential(nn.Linear(320, 10))
-        self._digit21 = nn.Sequential(nn.Linear(320, 10))
+
+        # self.pooling_layer = nn.AvgPool2d(7)
+
+        self.spp = SPPLayer(num_levels=spp_level, pool_type=spp_type)  # output size: 3*(1+4+16+64+128)=639
+
+        self.linear_input_size = sum((4**i) * 320 for i in range(spp_level))
+        self._digit11 = nn.Sequential(nn.Linear(self.linear_input_size, 10))
+        self._digit21 = nn.Sequential(nn.Linear(self.linear_input_size, 10))
 
     def _make_layers(self, in_planes):
         layers = []
@@ -67,6 +78,7 @@ class Model(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        x = self.stn_layer(x)
         # print(x.size())
         x = self.hidden1(x)
         # print(x.size())
@@ -74,10 +86,11 @@ class Model(nn.Module):
         # print(x.size())
         x = self.hidden2(x)
         # print(x.size())
-        x = F.avg_pool2d(x, 7)
+        # x = self.pooling_layer(x)
         # print(x.size())
-        x = x.view(x.size(0), -1)
+        # x = x.view(x.size(0), -1)
         # print(x.size())
+        x = self.spp(x)
 
         digit1_logits = self._digit11(x)
         digit2_logits = self._digit21(x)

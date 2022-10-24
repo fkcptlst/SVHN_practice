@@ -1,4 +1,4 @@
-SVHN
+SVHN_lmdb
 testimg
 trained_models
 *.pth
