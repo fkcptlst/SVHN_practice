@@ -1,0 +1,7 @@
+SVHN
+testimg
+trained_models
+*.pth
+*.pt
+*.pkl
+.idea
