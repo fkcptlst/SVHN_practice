@@ -12,17 +12,17 @@ class STNLayer(nn.Module):
         # Spatial transformer localization-network
         self.localization = nn.Sequential(
             nn.AdaptiveAvgPool2d(adaptive_pooling_shape), # TODO need check
-            nn.Conv2d(1, 8, kernel_size=7),
+            nn.Conv2d(3, 24, kernel_size=7),
             nn.MaxPool2d(2, stride=2),
             nn.ReLU(True),
-            nn.Conv2d(8, 10, kernel_size=5),
+            nn.Conv2d(24, 10, kernel_size=5),
             nn.MaxPool2d(2, stride=2),
             nn.ReLU(True)
         )
 
         self.spp_layer = SPPLayer(num_levels=spp_num_levels, pool_type=spp_pool_type)
 
-        linear_input_size = sum((4 ** i) * 3 for i in range(spp_num_levels))
+        linear_input_size = sum((4 ** i) * 10 for i in range(spp_num_levels))
         # Regressor for the 3 * 2 affine matrix
         self.fc_loc = nn.Sequential(
             # nn.Linear(10 * 3 * 3, 32),
@@ -43,7 +43,7 @@ class STNLayer(nn.Module):
         theta = self.fc_loc(xs)
         theta = theta.view(-1, 2, 3)
 
-        grid = F.affine_grid(theta, x.size())
-        x = F.grid_sample(x, grid)
+        grid = F.affine_grid(theta, x.size(), align_corners=True)
+        x = F.grid_sample(x, grid, align_corners=True)
 
         return x

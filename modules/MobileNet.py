@@ -46,10 +46,12 @@ class Model(nn.Module):
            (6, 160, 3, 2)]
 
     # t为扩张系数，c为输出通道数，n为该层重复的次数，s为步长
-    def __init__(self, spp_level=5, spp_type='max_pool', stn_spp_num_levels=3, stn_adaptive_pooling_shape=(54,54), stn_spp_pool_type='max_pool'):
+    def __init__(self, spp_level=5, spp_type='max_pool', use_stn=True, stn_spp_num_levels=3, stn_adaptive_pooling_shape=(54,54), stn_spp_pool_type='max_pool'):
         super().__init__()
 
-        self.stn_layer = STNLayer(spp_num_levels=stn_spp_num_levels, adaptive_pooling_shape=stn_adaptive_pooling_shape, spp_pool_type=stn_spp_pool_type)
+        self.use_stn = use_stn
+        if use_stn:
+            self.stn_layer = STNLayer(spp_num_levels=stn_spp_num_levels, adaptive_pooling_shape=stn_adaptive_pooling_shape, spp_pool_type=stn_spp_pool_type)
 
         self.hidden1 = nn.Sequential(nn.Conv2d(3, 32, kernel_size=3, stride=1, padding=1, bias=False),
                                      nn.BatchNorm2d(32),
@@ -78,7 +80,8 @@ class Model(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        x = self.stn_layer(x)
+        if self.use_stn:
+            x = self.stn_layer(x)
         # print(x.size())
         x = self.hidden1(x)
         # print(x.size())

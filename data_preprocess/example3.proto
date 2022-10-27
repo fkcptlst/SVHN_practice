@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+message Example {
+    bytes image = 1;
+    int32 length = 2;
+    int32 width = 3;
+    int32 height = 4;
+    int32 bbox_left = 5;
+    int32 bbox_top = 6;
+    int32 bbox_width = 7;
+    int32 bbox_height = 8;
+    repeated int32 digits = 9;
+}

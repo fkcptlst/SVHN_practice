@@ -2,7 +2,9 @@ import lmdb
 import numpy as np
 import torch.utils.data as data
 from PIL import Image
+
 import example_pb2
+
 
 class Dataset(data.Dataset):
     def __init__(self, path_to_lmdb_dir, transform):
@@ -24,11 +26,11 @@ class Dataset(data.Dataset):
         example.ParseFromString(value)
 
         image = np.frombuffer(example.image, dtype=np.uint8)
-        image = image.reshape([54, 54, 3]) # TODO
+        image = image.reshape([64, 64, 3])
         image = Image.fromarray(image)
         image = self._transform(image)
 
         length = example.length
         digits = example.digits
 
-        return image, digits
+        return image, length, digits
